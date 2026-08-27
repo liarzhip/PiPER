@@ -29,7 +29,7 @@ ros2 launch agx_arm_ctrl start_single_agx_arm_rviz.launch.py \
   arm_type:=piper_x \
   fw_version:=v189 \
   follow:=true \
-  control:=true\
+  control:=false\
   effector_type:=agx_gripper
   tcp_offset:='[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]'
 ```
