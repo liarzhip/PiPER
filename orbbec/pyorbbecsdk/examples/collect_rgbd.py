@@ -30,7 +30,7 @@ def depth_to_colormap(depth_mm):
         (depth_mm <= MAX_DEPTH_MM),
         depth_mm,
         0
-    )
+    ) # 过滤调无效深度和超出范围的值
     depth_8u = cv2.normalize(
         valid,
         None,
@@ -42,7 +42,7 @@ def depth_to_colormap(depth_mm):
     return cv2.applyColorMap(
         depth_8u,
         cv2.COLORMAP_JET
-    )
+    ) # 将深度图转化为为彩色图
 
 
 def save_rgbd(
@@ -58,7 +58,6 @@ def save_rgbd(
     """
     保存一组 RGB-D 数据。
     """
-
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     timestamp_ms = int(time.time() * 1000)
 
@@ -194,17 +193,16 @@ def main():
         SAVE_ROOT,
         exist_ok=True
     )
-    pipeline = Pipeline()
-    config = Config()
+    pipeline = Pipeline() # 连接相机
+    config = Config() # 创建配置对象
 
     # ========================================================
     # 1. 获取 Color stream
     # ========================================================
-
     try:
         color_profiles = (
             pipeline.get_stream_profile_list(
-                OBSensorType.COLOR_SENSOR
+                OBSensorType.COLOR_SENSOR #  彩色相机传感器
             )
         )
         color_profile = (
@@ -229,10 +227,9 @@ def main():
     # 2. 获取 Depth stream
     # ========================================================
     try:
-
         depth_profiles = (
             pipeline.get_stream_profile_list(
-                OBSensorType.DEPTH_SENSOR
+                OBSensorType.DEPTH_SENSOR # 深度传感器
             )
         )
         depth_profile = (
@@ -257,10 +254,9 @@ def main():
     # 3. 启动相机
     # ========================================================
     try:
-
-        pipeline.start(
+        pipeline.start( 
             config
-        )
+        ) # 按照配置启动相机
 
     except Exception as e:
         print(
@@ -283,7 +279,7 @@ def main():
         try:
             frames = pipeline.wait_for_frames(
                 1000
-            )
+            ) # 等待一组帧，最长等待时间1s
             if frames is None:
                 continue
 

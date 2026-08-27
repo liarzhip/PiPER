@@ -34,3 +34,79 @@ make -j$(nproc)
 make install
 cd ~/PiPER_X/orbbec/pyorbbecsdk
 export PYTHONPATH="$(pwd)/install/lib:$PYTHONPATH"
+```
+首先要配置PYTHONPATH才能识别到pyorbbecsdk库，执行：
+```sh
+source orbbec/setup_orbbec.sh
+```
+```py
+pipeline = Pipeline() # 连接相机
+config = Config() # 创建配置对象
+
+# todo: 配置彩色相机数据流
+color_profiles = (
+        pipeline.get_stream_profile_list(
+            OBSensorType.COLOR_SENSOR #  彩色相机传感器
+        )
+    )
+    color_profile = (
+        color_profiles.get_default_video_stream_profile()
+    )
+    print(
+        "Color profile:",
+        color_profile
+    )
+    config.enable_stream(
+        color_profile
+    )
+
+# todo: 配置深度相机传感器数据流
+depth_profiles = (
+        pipeline.get_stream_profile_list(
+            OBSensorType.DEPTH_SENSOR # 深度传感器
+        )
+    )
+    depth_profile = (
+        depth_profiles.get_default_video_stream_profile()
+    )
+    print(
+        "Depth profile:",
+        depth_profile
+    )
+    config.enable_stream(
+        depth_profile
+    )
+
+# todo: 按照配置启动相机
+pipeline.start( 
+        config
+    )  
+
+frames = pipeline.wait_for_frames(
+            1000
+        ) # 等待一组帧，最长等待时间1s
+if frames is None:
+    continue
+
+# ------------------------------------------------
+# 获取Color数据
+# ------------------------------------------------
+color_frame = (
+    frames.get_color_frame()
+)
+
+# ------------------------------------------------
+# 获取Depth数据
+# ------------------------------------------------
+depth_frame = (
+    frames.get_depth_frame()
+)
+if (
+    color_frame is None
+    or depth_frame is None
+):
+    continue
+
+# todo: 关闭设备
+pipeline.stop()
+```
