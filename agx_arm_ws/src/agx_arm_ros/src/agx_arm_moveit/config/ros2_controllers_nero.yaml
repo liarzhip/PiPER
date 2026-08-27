@@ -1,0 +1,74 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 200
+
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    gripper_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    left_hand_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    right_hand_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+arm_controller:
+  ros__parameters:
+    allow_nonzero_velocity_at_trajectory_end: false
+    joints:
+      - joint1
+      - joint2
+      - joint3
+      - joint4
+      - joint5
+      - joint6
+      - joint7
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+
+gripper_controller:
+  ros__parameters:
+    allow_nonzero_velocity_at_trajectory_end: false
+    joints:
+      - gripper
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+
+left_hand_controller:
+  ros__parameters:
+    allow_nonzero_velocity_at_trajectory_end: false
+    joints:
+      - left_thumb_metacarpal_joint
+      - left_thumb_proximal_joint
+      - left_index_proximal_joint
+      - left_middle_proximal_joint
+      - left_ring_proximal_joint
+      - left_pinky_proximal_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+
+right_hand_controller:
+  ros__parameters:
+    allow_nonzero_velocity_at_trajectory_end: false
+    joints:
+      - right_thumb_metacarpal_joint
+      - right_thumb_proximal_joint
+      - right_index_proximal_joint
+      - right_middle_proximal_joint
+      - right_ring_proximal_joint
+      - right_pinky_proximal_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity

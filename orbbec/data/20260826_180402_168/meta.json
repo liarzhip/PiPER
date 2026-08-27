@@ -1,0 +1,17 @@
+{
+    "timestamp_ms": 1787738642168,
+    "depth_scale": 1.0,
+    "color": {
+        "width": 640,
+        "height": 480,
+        "file": "color.png"
+    },
+    "depth": {
+        "width": 640,
+        "height": 400,
+        "raw_file": "depth_raw.png",
+        "mm_file": "depth_mm.npy",
+        "visualization_file": "depth_vis.png"
+    },
+    "depth_unit": "mm"
+}

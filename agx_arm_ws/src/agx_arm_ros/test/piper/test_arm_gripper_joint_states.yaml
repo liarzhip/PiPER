@@ -1,0 +1,12 @@
+name:
+- joint1
+- joint2
+- joint3
+- joint4
+- joint5
+- joint6
+- gripper
+position: [0.0, 0.2, -0.2, 0.0, -0.0, 0.0, 0.05]
+velocity: []
+effort: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5]
+

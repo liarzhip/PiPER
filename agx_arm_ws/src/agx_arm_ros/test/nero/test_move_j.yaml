@@ -1,0 +1,11 @@
+name:
+- joint1
+- joint2
+- joint3
+- joint4
+- joint5
+- joint6
+- joint7
+position: [0.0, 0.0, -0.0, 0.0, -0.0, 0.0, 0.0]
+velocity: []
+effort: []

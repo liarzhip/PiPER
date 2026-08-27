@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="agx_arm">
+  <xacro:arg name="arm_type" default="piper" />
+  <xacro:arg name="effector_type" default="none" />
+  <xacro:arg name="revo2_type" default="left" />
+
+  <xacro:property name="arm_type" value="$(arg arm_type)" />
+  <xacro:property name="flange_link" value="${'link7' if arm_type == 'nero' else 'link6'}" />
+
+  <!-- ======================== ARM GROUP ======================== -->
+  <group name="arm">
+    <chain base_link="base_link" tip_link="tcp_link" />
+  </group>
+
+  <!-- ======================== GRIPPER GROUP ======================== -->
+  <xacro:if value="$(eval effector_type == 'agx_gripper')">
+    <group name="gripper">
+      <link name="gripper_base" />
+      <link name="gripper_link1" />
+      <link name="gripper_link2" />
+      <joint name="gripper" />
+    </group>
+    <passive_joint name="gripper_joint1" />
+    <passive_joint name="gripper_joint2" />
+    <end_effector name="gripper_eef" parent_link="tcp_link" group="gripper" parent_group="arm" />
+    <group_state name="gripper_open" group="gripper">
+      <joint name="gripper" value="0.1" />
+    </group_state>
+    <group_state name="gripper_half" group="gripper">
+      <joint name="gripper" value="0.05" />
+    </group_state>
+    <group_state name="gripper_close" group="gripper">
+      <joint name="gripper" value="0.0" />
+    </group_state>
+    <disable_collisions link1="gripper_base" link2="gripper_link1" reason="Adjacent" />
+    <disable_collisions link1="gripper_base" link2="gripper_link2" reason="Adjacent" />
+    <disable_collisions link1="gripper_link1" link2="gripper_link2" reason="Adjacent" />
+    <xacro:unless value="$(eval arm_type == 'nero')">
+      <disable_collisions link1="flange_link" link2="${flange_link}" reason="Adjacent" />
+      <disable_collisions link1="gripper_base" link2="flange_link" reason="Adjacent" />
+      <disable_collisions link1="gripper_link1" link2="flange_link" reason="Never" />
+      <disable_collisions link1="gripper_link2" link2="flange_link" reason="Never" />
+      <disable_collisions link1="gripper_base" link2="${flange_link}" reason="Never" />
+      <disable_collisions link1="gripper_base" link2="link5" reason="Never" />
+      <disable_collisions link1="flange_link" link2="link5" reason="Never" />
+    </xacro:unless>
+    <xacro:if value="$(eval arm_type == 'nero')">
+      <disable_collisions link1="gripper_flange" link2="link7" reason="Adjacent" />
+      <disable_collisions link1="gripper_flange" link2="gripper_base" reason="Adjacent" />
+      <disable_collisions link1="gripper_flange" link2="link6" reason="Never" />
+      <disable_collisions link1="gripper_base" link2="link6" reason="Never" />
+    </xacro:if>
+  </xacro:if>
+
+  <!-- ======================== REVO2 LEFT HAND GROUP ======================== -->
+  <xacro:if value="$(eval effector_type == 'revo2' and revo2_type == 'left')">
+    <group name="hand">
+      <link name="left_base_link" />
+      <joint name="left_thumb_metacarpal_joint" />
+      <joint name="left_thumb_proximal_joint" />
+      <joint name="left_index_proximal_joint" />
+      <joint name="left_middle_proximal_joint" />
+      <joint name="left_ring_proximal_joint" />
+      <joint name="left_pinky_proximal_joint" />
+      <link name="left_thumb_metacarpal_link" />
+      <link name="left_thumb_proximal_link" />
+      <link name="left_thumb_distal_link" />
+      <link name="left_index_proximal_link" />
+      <link name="left_index_distal_link" />
+      <link name="left_middle_proximal_link" />
+      <link name="left_middle_distal_link" />
+      <link name="left_ring_proximal_link" />
+      <link name="left_ring_distal_link" />
+      <link name="left_pinky_proximal_link" />
+      <link name="left_pinky_distal_link" />
+    </group>
+    <end_effector name="left_hand_eef" parent_link="tcp_link" group="hand" parent_group="arm" />
+    <group_state name="hand_open" group="hand">
+      <joint name="left_thumb_metacarpal_joint" value="0.0" />
+      <joint name="left_thumb_proximal_joint" value="0.1" />
+      <joint name="left_index_proximal_joint" value="0.0" />
+      <joint name="left_middle_proximal_joint" value="0.0" />
+      <joint name="left_ring_proximal_joint" value="0.0" />
+      <joint name="left_pinky_proximal_joint" value="0.0" />
+    </group_state>
+    <group_state name="hand_half_close" group="hand">
+      <joint name="left_thumb_metacarpal_joint" value="0.8" />
+      <joint name="left_thumb_proximal_joint" value="0.8" />
+      <joint name="left_index_proximal_joint" value="0.5" />
+      <joint name="left_middle_proximal_joint" value="0.5" />
+      <joint name="left_ring_proximal_joint" value="0.5" />
+      <joint name="left_pinky_proximal_joint" value="0.5" />
+    </group_state>
+    <group_state name="hand_close" group="hand">
+      <joint name="left_thumb_metacarpal_joint" value="0.087" />
+      <joint name="left_thumb_proximal_joint" value="0.785" />
+      <joint name="left_index_proximal_joint" value="1.4" />
+      <joint name="left_middle_proximal_joint" value="1.4" />
+      <joint name="left_ring_proximal_joint" value="1.4" />
+      <joint name="left_pinky_proximal_joint" value="1.4" />
+    </group_state>
+    <passive_joint name="left_thumb_distal_joint" />
+    <passive_joint name="left_index_distal_joint" />
+    <passive_joint name="left_middle_distal_joint" />
+    <passive_joint name="left_ring_distal_joint" />
+    <passive_joint name="left_pinky_distal_joint" />
+    <!-- Left hand disable collisions -->
+    <disable_collisions link1="left_base_link" link2="left_index_distal_link" reason="Never" />
+    <disable_collisions link1="left_base_link" link2="left_index_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="left_base_link" link2="left_index_touch_link" reason="Never" />
+    <disable_collisions link1="left_base_link" link2="left_middle_distal_link" reason="Never" />
+    <disable_collisions link1="left_base_link" link2="left_middle_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="left_base_link" link2="left_middle_touch_link" reason="Never" />
+    <disable_collisions link1="left_base_link" link2="left_ring_distal_link" reason="Never" />
+    <disable_collisions link1="left_base_link" link2="left_ring_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="left_base_link" link2="left_ring_touch_link" reason="Never" />
+    <disable_collisions link1="left_base_link" link2="left_pinky_distal_link" reason="Never" />
+    <disable_collisions link1="left_base_link" link2="left_pinky_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="left_base_link" link2="left_pinky_touch_link" reason="Never" />
+    <disable_collisions link1="left_base_link" link2="left_thumb_distal_link" reason="Never" />
+    <disable_collisions link1="left_base_link" link2="left_thumb_metacarpal_link" reason="Adjacent" />
+    <disable_collisions link1="left_base_link" link2="left_thumb_proximal_link" reason="Never" />
+    <disable_collisions link1="left_base_link" link2="left_thumb_touch_link" reason="Never" />
+    <disable_collisions link1="left_index_distal_link" link2="left_index_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="left_index_distal_link" link2="left_index_touch_link" reason="Adjacent" />
+    <disable_collisions link1="left_index_distal_link" link2="left_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="left_index_distal_link" link2="left_middle_distal_link" reason="Adjacent" />
+    <disable_collisions link1="left_index_proximal_link" link2="left_index_touch_link" reason="Never" />
+    <disable_collisions link1="left_index_proximal_link" link2="left_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="left_index_proximal_link" link2="left_thumb_proximal_link" reason="Never" />
+    <disable_collisions link1="left_index_proximal_link" link2="left_middle_proximal_link" reason="Never" />
+    <disable_collisions link1="left_index_touch_link" link2="left_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="left_index_touch_link" link2="left_middle_touch_link" reason="Adjacent" />
+    <disable_collisions link1="left_middle_distal_link" link2="left_middle_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="left_middle_distal_link" link2="left_middle_touch_link" reason="Adjacent" />
+    <disable_collisions link1="left_middle_distal_link" link2="left_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="left_middle_distal_link" link2="left_ring_distal_link" reason="Adjacent" />
+    <disable_collisions link1="left_middle_proximal_link" link2="left_middle_touch_link" reason="Never" />
+    <disable_collisions link1="left_middle_proximal_link" link2="left_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="left_middle_proximal_link" link2="left_thumb_proximal_link" reason="Never" />
+    <disable_collisions link1="left_middle_proximal_link" link2="left_index_proximal_link" reason="Never" />
+    <disable_collisions link1="left_middle_proximal_link" link2="left_ring_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="left_middle_proximal_link" link2="left_pinky_proximal_link" reason="Never" />
+    <disable_collisions link1="left_middle_touch_link" link2="left_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="left_middle_touch_link" link2="left_ring_touch_link" reason="Adjacent" />
+    <disable_collisions link1="left_middle_touch_link" link2="left_pinky_touch_link" reason="Never" />
+    <disable_collisions link1="left_ring_distal_link" link2="left_ring_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="left_ring_distal_link" link2="left_ring_touch_link" reason="Adjacent" />
+    <disable_collisions link1="left_ring_distal_link" link2="left_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="left_ring_distal_link" link2="left_pinky_distal_link" reason="Adjacent" />
+    <disable_collisions link1="left_ring_proximal_link" link2="left_ring_touch_link" reason="Never" />
+    <disable_collisions link1="left_ring_proximal_link" link2="left_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="left_ring_proximal_link" link2="left_thumb_proximal_link" reason="Never" />
+    <disable_collisions link1="left_ring_proximal_link" link2="left_index_proximal_link" reason="Never" />
+    <disable_collisions link1="left_ring_proximal_link" link2="left_pinky_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="left_ring_touch_link" link2="left_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="left_ring_touch_link" link2="left_index_touch_link" reason="Never" />
+    <disable_collisions link1="left_ring_touch_link" link2="left_pinky_touch_link" reason="Adjacent" />
+    <disable_collisions link1="left_pinky_distal_link" link2="left_pinky_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="left_pinky_distal_link" link2="left_pinky_touch_link" reason="Adjacent" />
+    <disable_collisions link1="left_pinky_distal_link" link2="left_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="left_pinky_distal_link" link2="left_index_distal_link" reason="Never" />
+    <disable_collisions link1="left_pinky_distal_link" link2="left_middle_distal_link" reason="Never" />
+    <disable_collisions link1="left_pinky_proximal_link" link2="left_pinky_touch_link" reason="Never" />
+    <disable_collisions link1="left_pinky_proximal_link" link2="left_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="left_pinky_proximal_link" link2="left_thumb_proximal_link" reason="Never" />
+    <disable_collisions link1="left_pinky_proximal_link" link2="left_index_proximal_link" reason="Never" />
+    <disable_collisions link1="left_pinky_proximal_link" link2="left_middle_proximal_link" reason="Never" />
+    <disable_collisions link1="left_pinky_touch_link" link2="left_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="left_pinky_touch_link" link2="left_index_touch_link" reason="Never" />
+    <disable_collisions link1="left_pinky_touch_link" link2="left_middle_touch_link" reason="Never" />
+    <disable_collisions link1="left_thumb_distal_link" link2="left_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="left_thumb_distal_link" link2="left_thumb_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="left_thumb_distal_link" link2="left_thumb_touch_link" reason="Adjacent" />
+    <disable_collisions link1="left_thumb_metacarpal_link" link2="left_thumb_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="left_thumb_metacarpal_link" link2="left_thumb_touch_link" reason="Never" />
+    <disable_collisions link1="left_thumb_proximal_link" link2="left_thumb_touch_link" reason="Never" />
+    <xacro:if value="$(eval arm_type == 'nero')">
+      <disable_collisions link1="revo2_flange" link2="link7" reason="Adjacent" />
+      <disable_collisions link1="revo2_flange" link2="left_base_link" reason="Adjacent" />
+      <disable_collisions link1="revo2_flange" link2="link6" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link7" reason="Adjacent" />
+      <disable_collisions link1="gripper_flange" link2="revo2_flange" reason="Adjacent" />
+      <disable_collisions link1="gripper_flange" link2="left_base_link" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link6" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link5" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="base_link" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link1" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link2" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link3" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link4" reason="Never" />
+    </xacro:if>
+    <xacro:unless value="$(eval arm_type == 'nero')">
+      <disable_collisions link1="flange_link" link2="link6" reason="Adjacent" />
+      <disable_collisions link1="flange_link" link2="left_base_link" reason="Adjacent" />
+      <disable_collisions link1="flange_link" link2="link5" reason="Never" />
+    </xacro:unless>
+  </xacro:if>
+
+  <!-- ======================== REVO2 RIGHT HAND GROUP ======================== -->
+  <xacro:if value="$(eval effector_type == 'revo2' and revo2_type == 'right')">
+    <group name="hand">
+      <link name="right_base_link" />
+      <joint name="right_thumb_metacarpal_joint" />
+      <joint name="right_thumb_proximal_joint" />
+      <joint name="right_index_proximal_joint" />
+      <joint name="right_middle_proximal_joint" />
+      <joint name="right_ring_proximal_joint" />
+      <joint name="right_pinky_proximal_joint" />
+      <link name="right_thumb_metacarpal_link" />
+      <link name="right_thumb_proximal_link" />
+      <link name="right_thumb_distal_link" />
+      <link name="right_index_proximal_link" />
+      <link name="right_index_distal_link" />
+      <link name="right_middle_proximal_link" />
+      <link name="right_middle_distal_link" />
+      <link name="right_ring_proximal_link" />
+      <link name="right_ring_distal_link" />
+      <link name="right_pinky_proximal_link" />
+      <link name="right_pinky_distal_link" />
+    </group>
+    <end_effector name="right_hand_eef" parent_link="tcp_link" group="hand" parent_group="arm" />
+    <group_state name="hand_open" group="hand">
+      <joint name="right_thumb_metacarpal_joint" value="0.0" />
+      <joint name="right_thumb_proximal_joint" value="0.1" />
+      <joint name="right_index_proximal_joint" value="0.0" />
+      <joint name="right_middle_proximal_joint" value="0.0" />
+      <joint name="right_ring_proximal_joint" value="0.0" />
+      <joint name="right_pinky_proximal_joint" value="0.0" />
+    </group_state>
+    <group_state name="hand_half_close" group="hand">
+      <joint name="right_thumb_metacarpal_joint" value="0.8" />
+      <joint name="right_thumb_proximal_joint" value="0.8" />
+      <joint name="right_index_proximal_joint" value="0.5" />
+      <joint name="right_middle_proximal_joint" value="0.5" />
+      <joint name="right_ring_proximal_joint" value="0.5" />
+      <joint name="right_pinky_proximal_joint" value="0.5" />
+    </group_state>
+    <group_state name="hand_close" group="hand">
+      <joint name="right_thumb_metacarpal_joint" value="0.087" />
+      <joint name="right_thumb_proximal_joint" value="0.785" />
+      <joint name="right_index_proximal_joint" value="1.4" />
+      <joint name="right_middle_proximal_joint" value="1.4" />
+      <joint name="right_ring_proximal_joint" value="1.4" />
+      <joint name="right_pinky_proximal_joint" value="1.4" />
+    </group_state>
+    <passive_joint name="right_thumb_distal_joint" />
+    <passive_joint name="right_index_distal_joint" />
+    <passive_joint name="right_middle_distal_joint" />
+    <passive_joint name="right_ring_distal_joint" />
+    <passive_joint name="right_pinky_distal_joint" />
+    <!-- Right hand disable collisions -->
+    <disable_collisions link1="right_base_link" link2="right_index_distal_link" reason="Never" />
+    <disable_collisions link1="right_base_link" link2="right_index_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="right_base_link" link2="right_index_touch_link" reason="Never" />
+    <disable_collisions link1="right_base_link" link2="right_middle_distal_link" reason="Never" />
+    <disable_collisions link1="right_base_link" link2="right_middle_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="right_base_link" link2="right_middle_touch_link" reason="Never" />
+    <disable_collisions link1="right_base_link" link2="right_ring_distal_link" reason="Never" />
+    <disable_collisions link1="right_base_link" link2="right_ring_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="right_base_link" link2="right_ring_touch_link" reason="Never" />
+    <disable_collisions link1="right_base_link" link2="right_pinky_distal_link" reason="Never" />
+    <disable_collisions link1="right_base_link" link2="right_pinky_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="right_base_link" link2="right_pinky_touch_link" reason="Never" />
+    <disable_collisions link1="right_base_link" link2="right_thumb_distal_link" reason="Never" />
+    <disable_collisions link1="right_base_link" link2="right_thumb_metacarpal_link" reason="Adjacent" />
+    <disable_collisions link1="right_base_link" link2="right_thumb_proximal_link" reason="Never" />
+    <disable_collisions link1="right_base_link" link2="right_thumb_touch_link" reason="Never" />
+    <disable_collisions link1="right_index_distal_link" link2="right_index_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="right_index_distal_link" link2="right_index_touch_link" reason="Adjacent" />
+    <disable_collisions link1="right_index_distal_link" link2="right_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="right_index_distal_link" link2="right_middle_distal_link" reason="Adjacent" />
+    <disable_collisions link1="right_index_proximal_link" link2="right_index_touch_link" reason="Never" />
+    <disable_collisions link1="right_index_proximal_link" link2="right_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="right_index_proximal_link" link2="right_thumb_proximal_link" reason="Never" />
+    <disable_collisions link1="right_index_proximal_link" link2="right_middle_proximal_link" reason="Never" />
+    <disable_collisions link1="right_index_touch_link" link2="right_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="right_index_touch_link" link2="right_middle_touch_link" reason="Adjacent" />
+    <disable_collisions link1="right_middle_distal_link" link2="right_middle_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="right_middle_distal_link" link2="right_middle_touch_link" reason="Adjacent" />
+    <disable_collisions link1="right_middle_distal_link" link2="right_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="right_middle_distal_link" link2="right_ring_distal_link" reason="Adjacent" />
+    <disable_collisions link1="right_middle_proximal_link" link2="right_middle_touch_link" reason="Never" />
+    <disable_collisions link1="right_middle_proximal_link" link2="right_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="right_middle_proximal_link" link2="right_thumb_proximal_link" reason="Never" />
+    <disable_collisions link1="right_middle_proximal_link" link2="right_index_proximal_link" reason="Never" />
+    <disable_collisions link1="right_middle_proximal_link" link2="right_ring_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="right_middle_proximal_link" link2="right_pinky_proximal_link" reason="Never" />
+    <disable_collisions link1="right_middle_touch_link" link2="right_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="right_middle_touch_link" link2="right_ring_touch_link" reason="Adjacent" />
+    <disable_collisions link1="right_middle_touch_link" link2="right_pinky_touch_link" reason="Never" />
+    <disable_collisions link1="right_ring_distal_link" link2="right_ring_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="right_ring_distal_link" link2="right_ring_touch_link" reason="Adjacent" />
+    <disable_collisions link1="right_ring_distal_link" link2="right_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="right_ring_distal_link" link2="right_pinky_distal_link" reason="Adjacent" />
+    <disable_collisions link1="right_ring_proximal_link" link2="right_ring_touch_link" reason="Never" />
+    <disable_collisions link1="right_ring_proximal_link" link2="right_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="right_ring_proximal_link" link2="right_thumb_proximal_link" reason="Never" />
+    <disable_collisions link1="right_ring_proximal_link" link2="right_index_proximal_link" reason="Never" />
+    <disable_collisions link1="right_ring_proximal_link" link2="right_pinky_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="right_ring_touch_link" link2="right_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="right_ring_touch_link" link2="right_index_touch_link" reason="Never" />
+    <disable_collisions link1="right_ring_touch_link" link2="right_pinky_touch_link" reason="Adjacent" />
+    <disable_collisions link1="right_pinky_distal_link" link2="right_pinky_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="right_pinky_distal_link" link2="right_pinky_touch_link" reason="Adjacent" />
+    <disable_collisions link1="right_pinky_distal_link" link2="right_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="right_pinky_distal_link" link2="right_index_distal_link" reason="Never" />
+    <disable_collisions link1="right_pinky_distal_link" link2="right_middle_distal_link" reason="Never" />
+    <disable_collisions link1="right_pinky_proximal_link" link2="right_pinky_touch_link" reason="Never" />
+    <disable_collisions link1="right_pinky_proximal_link" link2="right_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="right_pinky_proximal_link" link2="right_thumb_proximal_link" reason="Never" />
+    <disable_collisions link1="right_pinky_proximal_link" link2="right_index_proximal_link" reason="Never" />
+    <disable_collisions link1="right_pinky_proximal_link" link2="right_middle_proximal_link" reason="Never" />
+    <disable_collisions link1="right_pinky_touch_link" link2="right_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="right_pinky_touch_link" link2="right_index_touch_link" reason="Never" />
+    <disable_collisions link1="right_pinky_touch_link" link2="right_middle_touch_link" reason="Never" />
+    <disable_collisions link1="right_thumb_distal_link" link2="right_thumb_metacarpal_link" reason="Never" />
+    <disable_collisions link1="right_thumb_distal_link" link2="right_thumb_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="right_thumb_distal_link" link2="right_thumb_touch_link" reason="Adjacent" />
+    <disable_collisions link1="right_thumb_metacarpal_link" link2="right_thumb_proximal_link" reason="Adjacent" />
+    <disable_collisions link1="right_thumb_metacarpal_link" link2="right_thumb_touch_link" reason="Never" />
+    <disable_collisions link1="right_thumb_proximal_link" link2="right_thumb_touch_link" reason="Never" />
+    <xacro:if value="$(eval arm_type == 'nero')">
+      <disable_collisions link1="revo2_flange" link2="link7" reason="Adjacent" />
+      <disable_collisions link1="revo2_flange" link2="right_base_link" reason="Adjacent" />
+      <disable_collisions link1="revo2_flange" link2="link6" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link7" reason="Adjacent" />
+      <disable_collisions link1="gripper_flange" link2="revo2_flange" reason="Adjacent" />
+      <disable_collisions link1="gripper_flange" link2="right_base_link" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link6" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link5" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="base_link" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link1" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link2" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link3" reason="Never" />
+      <disable_collisions link1="gripper_flange" link2="link4" reason="Never" />
+    </xacro:if>
+    <xacro:unless value="$(eval arm_type == 'nero')">
+      <disable_collisions link1="flange_link" link2="link6" reason="Adjacent" />
+      <disable_collisions link1="flange_link" link2="right_base_link" reason="Adjacent" />
+      <disable_collisions link1="flange_link" link2="link5" reason="Never" />
+    </xacro:unless>
+  </xacro:if>
+
+  <!-- ======================== HOME STATE ======================== -->
+  <xacro:unless value="$(eval arm_type == 'nero')">
+    <group_state name="home" group="arm">
+      <joint name="joint1" value="0" />
+      <joint name="joint2" value="0" />
+      <joint name="joint3" value="0" />
+      <joint name="joint4" value="0" />
+      <joint name="joint5" value="0" />
+      <joint name="joint6" value="0" />
+    </group_state>
+  </xacro:unless>
+  <xacro:if value="$(eval arm_type == 'nero')">
+    <group_state name="home" group="arm">
+      <joint name="joint1" value="0" />
+      <joint name="joint2" value="0" />
+      <joint name="joint3" value="0" />
+      <joint name="joint4" value="0" />
+      <joint name="joint5" value="0" />
+      <joint name="joint6" value="0" />
+      <joint name="joint7" value="0" />
+    </group_state>
+  </xacro:if>
+
+  <!-- ======================== ARM DISABLE COLLISIONS ======================== -->
+  <disable_collisions link1="base_link" link2="link1" reason="Adjacent" />
+  <disable_collisions link1="base_link" link2="link2" reason="Never" />
+  <disable_collisions link1="base_link" link2="link3" reason="Never" />
+  <disable_collisions link1="link1" link2="link2" reason="Adjacent" />
+  <disable_collisions link1="link1" link2="link3" reason="Never" />
+  <disable_collisions link1="link2" link2="link3" reason="Adjacent" />
+  <disable_collisions link1="link2" link2="link4" reason="Never" />
+  <disable_collisions link1="link3" link2="link4" reason="Adjacent" />
+  <disable_collisions link1="link3" link2="link5" reason="Never" />
+  <disable_collisions link1="link3" link2="link6" reason="Never" />
+  <disable_collisions link1="link4" link2="link5" reason="Adjacent" />
+  <disable_collisions link1="link4" link2="link6" reason="Never" />
+  <disable_collisions link1="link5" link2="link6" reason="Adjacent" />
+
+  <xacro:if value="$(eval arm_type == 'nero')">
+    <disable_collisions link1="base_link" link2="link4" reason="Never" />
+    <disable_collisions link1="base_link" link2="link5" reason="Never" />
+    <disable_collisions link1="base_link" link2="link6" reason="Never" />
+    <disable_collisions link1="base_link" link2="link7" reason="Never" />
+    <disable_collisions link1="link1" link2="link4" reason="Never" />
+    <disable_collisions link1="link1" link2="link5" reason="Never" />
+    <disable_collisions link1="link1" link2="link6" reason="Never" />
+    <disable_collisions link1="link1" link2="link7" reason="Never" />
+    <disable_collisions link1="link2" link2="link5" reason="Never" />
+    <disable_collisions link1="link2" link2="link6" reason="Never" />
+    <disable_collisions link1="link2" link2="link7" reason="Never" />
+    <disable_collisions link1="link3" link2="link7" reason="Never" />
+    <disable_collisions link1="link4" link2="link7" reason="Never" />
+    <disable_collisions link1="link5" link2="link7" reason="Never" />
+    <disable_collisions link1="link6" link2="link7" reason="Adjacent" />
+    <xacro:if value="$(eval effector_type == 'none')">
+      <disable_collisions link1="base_link" link2="end_effector" reason="Never" />
+      <disable_collisions link1="end_effector" link2="link1" reason="Never" />
+      <disable_collisions link1="end_effector" link2="link2" reason="Never" />
+      <disable_collisions link1="end_effector" link2="link3" reason="Never" />
+      <disable_collisions link1="end_effector" link2="link4" reason="Never" />
+      <disable_collisions link1="end_effector" link2="link7" reason="Adjacent" />
+    </xacro:if>
+  </xacro:if>
+</robot>

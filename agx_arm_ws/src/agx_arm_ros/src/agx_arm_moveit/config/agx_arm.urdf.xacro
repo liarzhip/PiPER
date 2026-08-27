@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="agx_arm">
+  <xacro:arg name="arm_type" default="piper" />
+  <xacro:arg name="effector_type" default="none" />
+  <xacro:arg name="revo2_type" default="left" />
+  <xacro:arg name="initial_positions_file" default="initial_positions.yaml" />
+  <xacro:arg name="tcp_offset_xyz" default="0 0 0" />
+  <xacro:arg name="tcp_offset_rpy" default="0 0 0" />
+
+  <xacro:property name="arm_type" value="$(arg arm_type)" />
+  <xacro:property name="flange_link" value="${'link7' if arm_type == 'nero' else 'link6'}" />
+
+  <xacro:if value="$(eval effector_type == 'agx_gripper')">
+    <xacro:include filename="$(find agx_arm_description)/agx_arm_urdf/$(arg arm_type)/urdf/$(arg arm_type)_with_gripper_description.xacro" />
+  </xacro:if>
+
+  <xacro:if value="$(eval effector_type == 'revo2' and revo2_type == 'left')">
+    <xacro:include filename="$(find agx_arm_description)/agx_arm_urdf/$(arg arm_type)/urdf/$(arg arm_type)_with_left_revo2_description.xacro" />
+  </xacro:if>
+  <xacro:if value="$(eval effector_type == 'revo2' and revo2_type == 'right')">
+    <xacro:include filename="$(find agx_arm_description)/agx_arm_urdf/$(arg arm_type)/urdf/$(arg arm_type)_with_right_revo2_description.xacro" />
+  </xacro:if>
+
+  <xacro:if value="$(eval effector_type == 'none')">
+    <xacro:include filename="$(find agx_arm_description)/agx_arm_urdf/$(arg arm_type)/urdf/$(arg arm_type)_description.urdf" />
+  </xacro:if>
+
+  <!-- TCP link: fixed offset from flange for MoveIt planning target -->
+  <link name="tcp_link" />
+  <joint name="tcp_joint" type="fixed">
+    <parent link="${flange_link}" />
+    <child link="tcp_link" />
+    <origin xyz="$(arg tcp_offset_xyz)" rpy="$(arg tcp_offset_rpy)" />
+  </joint>
+
+  <xacro:include filename="agx_arm.ros2_control.xacro" />
+  <xacro:agx_arm_ros2_control
+    name="FakeSystem"
+    initial_positions_file="$(arg initial_positions_file)"
+    arm_type="$(arg arm_type)"
+    effector_type="$(arg effector_type)"
+    revo2_type="$(arg revo2_type)"
+  />
+</robot>
