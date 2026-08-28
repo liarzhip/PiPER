@@ -9,6 +9,92 @@ from .filters import EMAFilter
 from .hand_detector import HandDetector
 from .orbbec_camera import OrbbecRGBDCamera
 
+def rotation_matrix_to_quaternion(R):
+
+    trace = float(
+        R[0, 0]
+        + R[1, 1]
+        + R[2, 2]
+    )
+
+    if trace > 0.0:
+        s = (
+            np.sqrt(trace + 1.0)
+            * 2.0
+        )
+        qw = 0.25 * s
+        qx = (
+            R[2, 1] - R[1, 2]
+        ) / s
+        qy = (
+            R[0, 2] - R[2, 0]
+        ) / s
+        qz = (
+            R[1, 0] - R[0, 1]
+        ) / s
+    elif (
+        R[0, 0] > R[1, 1]
+        and
+        R[0, 0] > R[2, 2]
+    ):
+        s = np.sqrt(
+            1.0
+            + R[0, 0]
+            - R[1, 1]
+            - R[2, 2]
+        ) * 2.0
+        qw = (
+            R[2, 1] - R[1, 2]
+        ) / s
+        qx = 0.25 * s
+        qy = (
+            R[0, 1] + R[1, 0]
+        ) / s
+        qz = (
+            R[0, 2] + R[2, 0]
+        ) / s
+    elif R[1, 1] > R[2, 2]:
+        s = np.sqrt(
+            1.0
+            + R[1, 1]
+            - R[0, 0]
+            - R[2, 2]
+        ) * 2.0
+        qw = (
+            R[0, 2] - R[2, 0]
+        ) / s
+        qx = (
+            R[0, 1] + R[1, 0]
+        ) / s
+        qy = 0.25 * s
+        qz = (
+            R[1, 2] + R[2, 1]
+        ) / s
+    else:
+        s = np.sqrt(
+            1.0
+            + R[2, 2]
+            - R[0, 0]
+            - R[1, 1]
+        ) * 2.0
+        qw = (
+            R[1, 0] - R[0, 1]
+        ) / s
+        qx = (
+            R[0, 2] + R[2, 0]
+        ) / s
+        qy = (
+            R[1, 2] + R[2, 1]
+        ) / s
+        qz = 0.25 * s
+
+    q = np.array(
+        [qx, qy, qz, qw],
+        dtype=np.float64,
+    )
+    q /= np.linalg.norm(q)
+
+    return q
 
 class HandVisionNode(Node):
     """
@@ -122,9 +208,36 @@ class HandVisionNode(Node):
             10,
         )
 
+        self.palm_pose_pub = (
+            self.create_publisher(
+                PoseStamped,
+                "/handshake/palm_pose_camera",
+                10
+            )
+        )
+
         self.timer = self.create_timer(
             1.0 / 30.0,
             self.tick,
+        )
+    def landmark_to_3d(
+        self,
+        depth_mm,
+        pixel
+    ):
+        u, v = pixel
+        z_mm = median_depth_mm(
+            depth_mm,
+            u,
+            v,
+            self.radius,
+        )
+        if z_mm is None:
+            return None
+        return self.deproject_undistorted(
+            u,
+            v,
+            z_mm,
         )
 
     def undistort_to_normalized(self, u: float, v: float):
@@ -225,6 +338,190 @@ class HandVisionNode(Node):
                 msg.pose.position.y = float(xyz[1])
                 msg.pose.position.z = float(xyz[2])
                 msg.pose.orientation.w = 1.0
+
+                required_ids = [
+                    0,      # Wrist
+                    5,      # Index MCP
+                    9,      # Middle MCP
+                    13,     # Ring MCP
+                    17,     # Pinky MCP
+                ]
+                points = {}
+                valid = True
+                for landmark_id in required_ids:
+                    p = self.landmark_to_3d(
+                        depth_mm,
+                        det.landmarks[
+                            landmark_id
+                        ],
+                    )
+                    if p is None:
+                        valid = False
+                        break
+                    points[
+                        landmark_id
+                    ] = p
+                if valid:
+                    P0 = points[0]
+                    P5 = points[5]
+                    P9 = points[9]
+                    P13 = points[13]
+                    P17 = points[17]
+
+                    # ======================================================
+                    # Palm Center
+                    # ======================================================
+                    palm_center = np.mean(
+                        np.stack(
+                            [
+                                P0,
+                                P5,
+                                P9,
+                                P13,
+                                P17,
+                            ]
+                        ),
+                        axis=0,
+                    )
+
+                    # ======================================================
+                    # Palm X
+                    #
+                    # Pinky MCP -> Index MCP
+                    # ======================================================
+                    x_palm = (
+                        P5 - P17
+                    )
+                    x_norm = np.linalg.norm(
+                        x_palm
+                    )
+                    if x_norm < 1e-6:
+                        return
+                    x_palm /= x_norm
+
+                    # ======================================================
+                    # Palm Y
+                    #
+                    # Wrist -> Middle MCP
+                    # ======================================================
+                    y_hint = (
+                        P9 - P0
+                    )
+                    # 去除在X方向的投影
+                    # 保证X/Y正交
+                    y_palm = (
+                        y_hint
+                        -
+                        np.dot(
+                            y_hint,
+                            x_palm
+                        )
+                        * x_palm
+                    )
+                    y_norm = np.linalg.norm(
+                        y_palm
+                    )
+                    if y_norm < 1e-6:
+                        return
+                    y_palm /= y_norm
+
+                    # ======================================================
+                    # Palm Normal
+                    # ======================================================
+                    z_palm = np.cross(
+                        x_palm,
+                        y_palm
+                    )
+                    z_norm = np.linalg.norm(
+                        z_palm
+                    )
+                    if z_norm < 1e-6:
+                        return
+                    z_palm /= z_norm
+
+                    # ======================================================
+                    # Normal方向统一
+                    #
+                    # Camera optical frame:
+                    # palm_center 是 Camera -> Hand
+                    #
+                    # 我们让 Z_palm 始终朝向 Camera。
+                    # ======================================================
+                    if (
+                        np.dot(
+                            z_palm,
+                            palm_center
+                        )
+                        > 0
+                    ):
+                        # 同时翻转 X 和 Z，
+                        # 保持右手坐标系
+                        x_palm = -x_palm
+                        z_palm = -z_palm
+
+                    # 再正交一次
+                    y_palm = np.cross(
+                        z_palm,
+                        x_palm
+                    )
+
+                    y_palm /= np.linalg.norm(
+                        y_palm
+                    )
+
+                    # ======================================================
+                    # Rotation Matrix
+                    #
+                    # 每一列分别是 Palm Frame 的 XYZ
+                    # 在 Camera Frame 中的方向
+                    # ======================================================
+                    R_camera_palm = np.column_stack(
+                        (
+                            x_palm,
+                            y_palm,
+                            z_palm,
+                        )
+                    )
+                    q = rotation_matrix_to_quaternion(
+                        R_camera_palm
+                    )
+
+                    # ======================================================
+                    # Publish Palm Pose
+                    # ======================================================
+                    palm_msg = PoseStamped()
+                    palm_msg.header.stamp = (
+                        self.get_clock()
+                        .now()
+                        .to_msg()
+                    )
+                    palm_msg.header.frame_id = (
+                        self.camera_frame
+                    )
+                    palm_msg.pose.position.x = float(
+                        palm_center[0]
+                    )
+                    palm_msg.pose.position.y = float(
+                        palm_center[1]
+                    )
+                    palm_msg.pose.position.z = float(
+                        palm_center[2]
+                    )
+                    palm_msg.pose.orientation.x = float(
+                        q[0]
+                    )
+                    palm_msg.pose.orientation.y = float(
+                        q[1]
+                    )
+                    palm_msg.pose.orientation.z = float(
+                        q[2]
+                    )
+                    palm_msg.pose.orientation.w = float(
+                        q[3]
+                    )
+                    self.palm_pose_pub.publish(
+                        palm_msg
+                    )
 
                 self.pub.publish(msg)
 
