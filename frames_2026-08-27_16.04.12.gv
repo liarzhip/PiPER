@@ -1,0 +1,18 @@
+digraph G {
+"gripper_base" -> "gripper_link"[label=" Broadcaster: default_authority\nAverage rate: 18.962\nBuffer length: 5.01\nMost recent transform: 1787817852.072551\nOldest transform: 1787817847.062545\n"];
+"flange_link" -> "gripper_base"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"gripper_base" -> "gripper_link1"[label=" Broadcaster: default_authority\nAverage rate: 18.962\nBuffer length: 5.01\nMost recent transform: 1787817852.072551\nOldest transform: 1787817847.062545\n"];
+"gripper_base" -> "gripper_link2"[label=" Broadcaster: default_authority\nAverage rate: 18.962\nBuffer length: 5.01\nMost recent transform: 1787817852.072551\nOldest transform: 1787817847.062545\n"];
+"base_link" -> "link1"[label=" Broadcaster: default_authority\nAverage rate: 18.962\nBuffer length: 5.01\nMost recent transform: 1787817852.072551\nOldest transform: 1787817847.062545\n"];
+"world" -> "base_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"link1" -> "link2"[label=" Broadcaster: default_authority\nAverage rate: 18.962\nBuffer length: 5.01\nMost recent transform: 1787817852.072551\nOldest transform: 1787817847.062545\n"];
+"link2" -> "link3"[label=" Broadcaster: default_authority\nAverage rate: 18.962\nBuffer length: 5.01\nMost recent transform: 1787817852.072551\nOldest transform: 1787817847.062545\n"];
+"link3" -> "link4"[label=" Broadcaster: default_authority\nAverage rate: 18.962\nBuffer length: 5.01\nMost recent transform: 1787817852.072551\nOldest transform: 1787817847.062545\n"];
+"link4" -> "link5"[label=" Broadcaster: default_authority\nAverage rate: 18.962\nBuffer length: 5.01\nMost recent transform: 1787817852.072551\nOldest transform: 1787817847.062545\n"];
+"link5" -> "link6"[label=" Broadcaster: default_authority\nAverage rate: 18.962\nBuffer length: 5.01\nMost recent transform: 1787817852.072551\nOldest transform: 1787817847.062545\n"];
+"link6" -> "flange_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1787817852.111281"[ shape=plaintext ] ;
+}->"world";
+}

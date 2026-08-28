@@ -1,0 +1,70 @@
+hand_vision_node:
+  ros__parameters:
+
+    camera_frame: camera_color_optical_frame
+    align_mode: HW
+    show_window: true
+
+    depth_roi_radius: 7
+    position_filter_alpha: 0.15
+
+    enable_undistortion: true
+
+    distortion_coeffs:
+      - -0.07695747166872025
+      - -0.10455092042684555
+      - 0.0004042932123411447
+      - -0.0000033492169677629136
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+
+hand_follow_controller:
+  ros__parameters:
+
+    enable_motion: true
+
+    base_frame: base_link
+    camera_frame: camera_color_optical_frame
+
+    hand_topic: /hand/pose_camera
+    tcp_feedback_topic: /feedback/tcp_pose
+    control_topic: /control/move_p
+
+    # 手掌保持在相机前 40 cm
+    desired_distance_m: 0.40
+
+    # 视觉伺服比例增益
+    kp: 0.30
+
+    # 控制频率
+    control_rate_hz: 30.0
+
+    # 死区
+    deadband_xy_m: 0.001
+    deadband_z_m: 0.001
+
+    # 平滑运动参数
+    max_speed_mps: 0.20
+    max_accel_mps2: 0.50
+
+    # 单周期绝对最大增量
+    max_step_m: 1.0
+
+    # 丢手保护
+    hand_timeout_s: 0.35
+
+    # 合理手掌距离
+    min_hand_depth_m: 0.020
+    max_hand_depth_m: 0.800
+
+    # 当前建议工作空间
+    workspace_x_min: 0.00
+    workspace_x_max: 1.90
+
+    workspace_y_min: -1.50
+    workspace_y_max: 1.50
+
+    workspace_z_min: 0.00
+    workspace_z_max: 1.80   
