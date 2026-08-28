@@ -50,7 +50,8 @@ setup(
             'stability_detector = piper_handshake.stability_detector:main',
             'locked_pose_transformer = piper_handshake.locked_pose_transformer:main',
             'handshake_planner = piper_handshake.handshake_planner:main',
-            'handshake_controller = piper_handshake.handshake_controller:main',
+
+            'moveit_auto_handshake_controller = piper_handshake.moveit_auto_handshake_controller:main',
         ],
     },
 )

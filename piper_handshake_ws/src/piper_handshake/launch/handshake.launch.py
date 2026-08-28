@@ -126,25 +126,105 @@ def generate_launch_description():
             ],
             output="screen",
         ),
+        # Node(
+        #     package="piper_handshake",
+        #     executable="handshake_controller",
+        #     name="handshake_controller",
+        #     parameters=[
+        #         {
+        #             # 第一次测试先 false
+        #             "enable_motion": True,
+        #             "workspace_x_min": 0.00,
+        #             "workspace_x_max": 0.80,
+        #             "workspace_y_min": -0.50,
+        #             "workspace_y_max": 0.50,
+        #             "workspace_z_min": 0.00,
+        #             "workspace_z_max": 0.60,
+        #             "max_move_distance_m": 0.45,
+        #             "position_tolerance_m": 0.015,
+        #             "motion_timeout_s": 15.0,
+        #         }
+        #     ],
+        #     output="screen",
+        # ),
         Node(
             package="piper_handshake",
-            executable="handshake_controller",
-            name="handshake_controller",
+            executable="moveit_auto_handshake_controller",
+            name="moveit_auto_handshake_controller",
+
             parameters=[
                 {
-                    # 第一次测试先 false
-                    "enable_motion": True,
-                    "workspace_x_min": 0.00,
-                    "workspace_x_max": 0.80,
-                    "workspace_y_min": -0.50,
-                    "workspace_y_max": 0.50,
-                    "workspace_z_min": 0.00,
-                    "workspace_z_max": 0.60,
-                    "max_move_distance_m": 0.45,
-                    "position_tolerance_m": 0.015,
-                    "motion_timeout_s": 15.0,
+                    "planning_group": "arm",
+
+                    "pose_link": "gripper_base",
+                    "base_frame": "base_link",
+
+                    "move_action": "/move_action",
+                    "execute_action": "/execute_trajectory",
+
+                    "joint_feedback_topic": "/feedback/joint_states",
+
+                    # ======================================
+                    # 总开关
+                    # ======================================
+
+                    "enable_auto_motion": True,
+
+                    # 手稳定、Pose准备完成后自动开始
+                    "auto_start_on_plan_ready": True,
+
+                    # ======================================
+                    # MoveIt planning
+                    # ======================================
+
+                    "planning_time_s": 5.0,
+                    "planning_attempts": 5,
+
+                    "position_tolerance_m": 0.010,
+                    "orientation_tolerance_deg": 5.0,
+
+                    # ======================================
+                    # Approach
+                    # ======================================
+
+                    "approach_velocity_scaling": 0.10,
+                    "approach_acceleration_scaling": 0.10,
+
+                    # ======================================
+                    # Handshake
+                    # 更慢
+                    # ======================================
+
+                    "handshake_velocity_scaling": 0.05,
+                    "handshake_acceleration_scaling": 0.05,
+
+                    # ======================================
+                    # Return HOME
+                    # ======================================
+
+                    "return_velocity_scaling": 0.10,
+                    "return_acceleration_scaling": 0.10,
+
+                    # ======================================
+                    # 精确到位判断
+                    # ======================================
+
+                    "approach_verify_position_m": 0.020,
+                    "approach_verify_orientation_deg": 10.0,
+
+                    "handshake_verify_position_m": 0.015,
+                    "handshake_verify_orientation_deg": 8.0,
+
+                    "home_verify_joint_deg": 2.0,
+
+                    "verify_stable_samples": 5,
+                    "verify_timeout_s": 5.0,
+
+                    # 到最终握手点停1.5秒
+                    "handshake_dwell_s": 1.5,
                 }
             ],
+
             output="screen",
         ),
     ])
