@@ -10,6 +10,6 @@ handover_planner_node:
     # The EARbud-case center, not gripper_base, stays this far from Palm Final.
     # Conservative first-test values.
     approach_object_standoff_m: 0.20
-    final_object_standoff_m: 0.10
+    final_object_standoff_m: 0.01
 
     minimum_palm_distance_m: 0.12

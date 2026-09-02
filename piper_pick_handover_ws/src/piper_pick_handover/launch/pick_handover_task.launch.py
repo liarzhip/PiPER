@@ -7,19 +7,26 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    share = get_package_share_directory("piper_pick_handover")
+    share = get_package_share_directory(
+        "piper_pick_handover"
+    )
 
     moveit_executor_yaml = os.path.join(
-        share, "config", "moveit_executor.yaml"
+        share,
+        "config",
+        "moveit_executor.yaml",
     )
+
     table_scene_yaml = os.path.join(
-        share, "config", "table_scene.yaml"
+        share,
+        "config",
+        "table_scene.yaml",
     )
-    observe_hand_yaml = os.path.join(
-        share, "config", "observe_hand.yaml"
-    )
+
     handover_yaml = os.path.join(
-        share, "config", "handover.yaml"
+        share,
+        "config",
+        "handover.yaml",
     )
 
     moveit_executor = Node(
@@ -27,7 +34,9 @@ def generate_launch_description():
         executable="moveit_executor_node",
         name="moveit_executor_node",
         output="screen",
-        parameters=[moveit_executor_yaml],
+        parameters=[
+            moveit_executor_yaml,
+        ],
     )
 
     table_scene = Node(
@@ -35,11 +44,11 @@ def generate_launch_description():
         executable="table_scene_node",
         name="table_scene_node",
         output="screen",
-        parameters=[table_scene_yaml],
+        parameters=[
+            table_scene_yaml,
+        ],
     )
 
-    # Pure MoveIt WORK_HOME controller.
-    # No old startup JointState/control_enable path is launched here.
     work_home_controller = Node(
         package="piper_pick_handover",
         executable="work_home_controller_node",
@@ -47,20 +56,14 @@ def generate_launch_description():
         output="screen",
     )
 
-    observe_hand_planner = Node(
-        package="piper_pick_handover",
-        executable="observe_hand_planner_node",
-        name="observe_hand_planner_node",
-        output="screen",
-        parameters=[observe_hand_yaml],
-    )
-
     handover_planner = Node(
         package="piper_pick_handover",
         executable="handover_planner_node",
         name="handover_planner_node",
         output="screen",
-        parameters=[handover_yaml],
+        parameters=[
+            handover_yaml,
+        ],
     )
 
     manager = Node(
@@ -74,19 +77,27 @@ def generate_launch_description():
         [
             LogInfo(
                 msg=(
-                    "TASK LAYER ONLY: MoveIt executor + table scene + WORK_HOME "
-                    "+ observe-hand planner + handover planner + manager."
+                    "TASK LAYER: MoveIt executor + table scene + WORK_HOME "
+                    "+ handover planner + manager."
                 )
             ),
             LogInfo(
                 msg=(
-                    "Requires the PIPER/MoveIt terminal and vision terminal to be running."
+                    "Post-Lift flow: WORK_HOME while holding object -> "
+                    "fresh Palm Final -> Handover. "
+                    "observe_hand_planner_node is no longer used."
                 )
             ),
+            LogInfo(
+                msg=(
+                    "Requires the PIPER/MoveIt terminal and vision terminal "
+                    "to already be running."
+                )
+            ),
+
             moveit_executor,
             table_scene,
             work_home_controller,
-            observe_hand_planner,
             handover_planner,
             manager,
         ]

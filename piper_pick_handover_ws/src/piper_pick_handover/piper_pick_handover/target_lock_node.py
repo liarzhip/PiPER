@@ -1,3 +1,20 @@
+#!/usr/bin/env python3
+"""
+Target locking for the simplified two-stage perception workflow.
+
+Stage A - before grasp:
+    - lock ONLY the earbud case.
+    - all palm detections are ignored.
+    - /targets/start_targets_ready now means CASE READY FOR PICK.
+
+Stage B - after Lift and after the arm returns to WORK_HOME:
+    - manager calls /targets/arm_palm_final.
+    - old palm samples are discarded.
+    - then a NEW stable palm is locked as /targets/palm_final_pose_base.
+
+There is NO Palm Initial stage anymore.
+"""
+
 import math
 from collections import deque
 
@@ -19,8 +36,10 @@ from std_srvs.srv import Trigger
 def normalize_quaternion(q, eps=1e-12):
     q = np.asarray(q, dtype=np.float64)
     n = float(np.linalg.norm(q))
+
     if n < eps:
         return None
+
     return q / n
 
 
@@ -49,12 +68,14 @@ def pose_to_arrays(msg):
 def quaternion_average(quaternions):
     """
     Average unit quaternions after resolving q / -q sign ambiguity.
-    Sufficient here because a stable window contains only small rotations.
     """
     if not quaternions:
         return None
 
-    q0 = normalize_quaternion(quaternions[0])
+    q0 = normalize_quaternion(
+        quaternions[0]
+    )
+
     if q0 is None:
         return None
 
@@ -80,9 +101,6 @@ def quaternion_average(quaternions):
 
 
 def quaternion_angle_deg(q1, q2):
-    """
-    Smallest orientation difference between two quaternions, degrees.
-    """
     q1 = normalize_quaternion(q1)
     q2 = normalize_quaternion(q2)
 
@@ -97,7 +115,10 @@ def quaternion_angle_deg(q1, q2):
 
     dot = max(
         -1.0,
-        min(1.0, dot),
+        min(
+            1.0,
+            dot,
+        ),
     )
 
     return math.degrees(
@@ -106,6 +127,7 @@ def quaternion_angle_deg(q1, q2):
 
 
 class PoseWindow:
+
     def __init__(self, size):
         self.size = int(size)
         self.samples = deque(
@@ -138,10 +160,6 @@ class PoseWindow:
         )
 
     def analyze(self):
-        """
-        Returns:
-            stable statistics + averaged PoseStamped source data
-        """
         if not self.full():
             return None
 
@@ -185,7 +203,6 @@ class PoseWindow:
             dtype=np.float64,
         )
 
-        # Use RMS orientation variation.
         angle_rms_deg = float(
             np.sqrt(
                 np.mean(
@@ -205,40 +222,34 @@ class PoseWindow:
             "max_position_std": float(
                 np.max(std_xyz)
             ),
-            "angle_rms_deg": (
-                angle_rms_deg
-            ),
-            "newest_msg": newest_msg,
+            "angle_rms_deg":
+                angle_rms_deg,
+            "newest_msg":
+                newest_msg,
         }
 
 
 class TargetLockNode(Node):
     """
-    STEP 4 target locking.
+    Inputs:
+        /targets/earbud_case_pose_base_live
+        /targets/palm_pose_base_live
 
-    Input LIVE targets:
-      /targets/earbud_case_pose_base_live
-      /targets/palm_pose_base_live
+    Locked outputs:
+        /targets/earbud_case_pose_base
+        /targets/palm_final_pose_base
 
-    Output LOCKED targets:
-      /targets/earbud_case_pose_base
-      /targets/palm_initial_pose_base
-      /targets/palm_final_pose_base
+    Status:
+        /targets/case_locked
+        /targets/palm_final_locked
 
-    Startup:
-      - earbud case is automatically locked once stable.
-      - palm_initial is automatically locked once stable.
+    Compatibility status:
+        /targets/start_targets_ready
+            == case_locked
 
-    Later:
-      After the robot has grasped/lifted the case and reached the
-      observe-hand pose, call:
-
+    Services:
+        /targets/reset
         /targets/arm_palm_final
-
-      Then this node discards old palm samples and waits for a NEW,
-      stable palm measurement before locking palm_final.
-
-    No robot motion occurs here.
     """
 
     def __init__(self):
@@ -246,10 +257,9 @@ class TargetLockNode(Node):
             "target_lock_node"
         )
 
-        # ==========================================================
+        # ----------------------------------------------------------
         # Parameters
-        # ==========================================================
-
+        # ----------------------------------------------------------
         self.declare_parameter(
             "base_frame",
             "base_link",
@@ -286,6 +296,7 @@ class TargetLockNode(Node):
             "max_case_z_m",
             1.20,
         )
+
         self.declare_parameter(
             "min_palm_z_m",
             -0.10,
@@ -295,10 +306,9 @@ class TargetLockNode(Node):
             1.50,
         )
 
-        # ==========================================================
+        # ----------------------------------------------------------
         # Read parameters
-        # ==========================================================
-
+        # ----------------------------------------------------------
         self.base_frame = str(
             self.get_parameter(
                 "base_frame"
@@ -355,10 +365,9 @@ class TargetLockNode(Node):
             ).value
         )
 
-        # ==========================================================
+        # ----------------------------------------------------------
         # State
-        # ==========================================================
-
+        # ----------------------------------------------------------
         self.case_window = PoseWindow(
             self.window_size
         )
@@ -367,23 +376,16 @@ class TargetLockNode(Node):
         )
 
         self.case_locked = False
-        self.palm_initial_locked = False
-        self.palm_final_locked = False
 
-        # Palm final must be explicitly armed AFTER observe-hand.
+        self.palm_final_locked = False
         self.palm_final_armed = False
 
         self.locked_case_pose = None
-        self.locked_palm_initial_pose = None
         self.locked_palm_final_pose = None
 
-        # ==========================================================
+        # ----------------------------------------------------------
         # QoS
-        #
-        # Transient-local means a later planner can still receive the
-        # most recently locked target after it starts.
-        # ==========================================================
-
+        # ----------------------------------------------------------
         locked_qos = QoSProfile(
             history=HistoryPolicy.KEEP_LAST,
             depth=1,
@@ -391,22 +393,13 @@ class TargetLockNode(Node):
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
         )
 
-        # ==========================================================
+        # ----------------------------------------------------------
         # Publishers
-        # ==========================================================
-
+        # ----------------------------------------------------------
         self.case_locked_pose_pub = (
             self.create_publisher(
                 PoseStamped,
                 "/targets/earbud_case_pose_base",
-                locked_qos,
-            )
-        )
-
-        self.palm_initial_pose_pub = (
-            self.create_publisher(
-                PoseStamped,
-                "/targets/palm_initial_pose_base",
                 locked_qos,
             )
         )
@@ -427,14 +420,6 @@ class TargetLockNode(Node):
             )
         )
 
-        self.palm_initial_locked_pub = (
-            self.create_publisher(
-                Bool,
-                "/targets/palm_initial_locked",
-                locked_qos,
-            )
-        )
-
         self.palm_final_locked_pub = (
             self.create_publisher(
                 Bool,
@@ -443,6 +428,9 @@ class TargetLockNode(Node):
             )
         )
 
+        # Keep this topic because moveit_executor_node currently uses it
+        # as a pick-stage interlock.  Its NEW meaning is simply:
+        #     Case target is locked and ready for pick.
         self.start_targets_ready_pub = (
             self.create_publisher(
                 Bool,
@@ -451,58 +439,49 @@ class TargetLockNode(Node):
             )
         )
 
-        # ==========================================================
+        # ----------------------------------------------------------
         # Subscribers
-        # ==========================================================
-
-        self.case_sub = (
-            self.create_subscription(
-                PoseStamped,
-                "/targets/earbud_case_pose_base_live",
-                self.case_callback,
-                10,
-            )
+        # ----------------------------------------------------------
+        self.create_subscription(
+            PoseStamped,
+            "/targets/earbud_case_pose_base_live",
+            self.case_callback,
+            10,
         )
 
-        self.palm_sub = (
-            self.create_subscription(
-                PoseStamped,
-                "/targets/palm_pose_base_live",
-                self.palm_callback,
-                10,
-            )
+        self.create_subscription(
+            PoseStamped,
+            "/targets/palm_pose_base_live",
+            self.palm_callback,
+            10,
         )
 
-        # ==========================================================
+        # ----------------------------------------------------------
         # Services
-        # ==========================================================
-
-        self.arm_palm_final_srv = (
-            self.create_service(
-                Trigger,
-                "/targets/arm_palm_final",
-                self.arm_palm_final_callback,
-            )
+        # ----------------------------------------------------------
+        self.create_service(
+            Trigger,
+            "/targets/arm_palm_final",
+            self.arm_palm_final_callback,
         )
 
-        self.reset_srv = (
-            self.create_service(
-                Trigger,
-                "/targets/reset",
-                self.reset_callback,
-            )
+        self.create_service(
+            Trigger,
+            "/targets/reset",
+            self.reset_callback,
         )
 
         self.publish_states()
 
         self.get_logger().info(
-            "STEP 4 target lock node started."
+            "Target lock node started."
         )
-
         self.get_logger().info(
-            "Waiting for stable CASE + PALM INITIAL..."
+            "Stage A: waiting for stable CASE ONLY; palm is ignored."
         )
-
+        self.get_logger().info(
+            "Stage B begins only after /targets/arm_palm_final."
+        )
         self.get_logger().info(
             "NO robot motion."
         )
@@ -597,19 +576,10 @@ class TargetLockNode(Node):
 
     def publish_states(self):
         msg = Bool()
-
         msg.data = bool(
             self.case_locked
         )
         self.case_locked_pub.publish(
-            msg
-        )
-
-        msg = Bool()
-        msg.data = bool(
-            self.palm_initial_locked
-        )
-        self.palm_initial_locked_pub.publish(
             msg
         )
 
@@ -621,18 +591,17 @@ class TargetLockNode(Node):
             msg
         )
 
+        # Compatibility with current moveit_executor interlock.
         msg = Bool()
         msg.data = bool(
             self.case_locked
-            and
-            self.palm_initial_locked
         )
         self.start_targets_ready_pub.publish(
             msg
         )
 
     # ==============================================================
-    # Case
+    # Case - automatic in Stage A
     # ==============================================================
 
     def case_callback(
@@ -642,9 +611,7 @@ class TargetLockNode(Node):
         if self.case_locked:
             return
 
-        if not self.valid_frame(
-            msg
-        ):
+        if not self.valid_frame(msg):
             self.get_logger().warning(
                 "Ignoring case pose: "
                 f"frame_id='{msg.header.frame_id}', "
@@ -652,21 +619,15 @@ class TargetLockNode(Node):
             )
             return
 
-        if not self.case_window.append(
-            msg
-        ):
+        if not self.case_window.append(msg):
             return
 
-        stats = (
-            self.case_window.analyze()
-        )
+        stats = self.case_window.analyze()
 
         if stats is None:
             return
 
-        if not self.is_case_stable(
-            stats
-        ):
+        if not self.is_case_stable(stats):
             return
 
         xyz = stats[
@@ -719,34 +680,22 @@ class TargetLockNode(Node):
         )
 
     # ==============================================================
-    # Palm
+    # Palm - ONLY after explicit arm_palm_final
     # ==============================================================
 
     def palm_callback(
         self,
         msg,
     ):
-        # Before Palm Initial is locked:
-        #   collect only initial-hand samples.
-        #
-        # After Palm Initial:
-        #   ignore all palm data until /targets/arm_palm_final.
-        #
-        # After arm_palm_final:
-        #   collect a fresh window and lock Palm Final.
-        if (
-            self.palm_initial_locked
-            and
-            not self.palm_final_armed
-        ):
+        # Critical change:
+        # During the initial CASE acquisition stage, ignore every palm frame.
+        if not self.palm_final_armed:
             return
 
         if self.palm_final_locked:
             return
 
-        if not self.valid_frame(
-            msg
-        ):
+        if not self.valid_frame(msg):
             self.get_logger().warning(
                 "Ignoring palm pose: "
                 f"frame_id='{msg.header.frame_id}', "
@@ -754,21 +703,15 @@ class TargetLockNode(Node):
             )
             return
 
-        if not self.palm_window.append(
-            msg
-        ):
+        if not self.palm_window.append(msg):
             return
 
-        stats = (
-            self.palm_window.analyze()
-        )
+        stats = self.palm_window.analyze()
 
         if stats is None:
             return
 
-        if not self.is_palm_stable(
-            stats
-        ):
+        if not self.is_palm_stable(stats):
             return
 
         xyz = stats[
@@ -784,7 +727,7 @@ class TargetLockNode(Node):
             self.max_palm_z,
         ):
             self.get_logger().warning(
-                "Stable palm rejected: "
+                "Stable Palm Final rejected: "
                 f"Z={xyz[2]:.3f} m outside "
                 f"[{self.min_palm_z:.3f}, "
                 f"{self.max_palm_z:.3f}]"
@@ -792,7 +735,7 @@ class TargetLockNode(Node):
             self.palm_window.clear()
             return
 
-        locked_pose = (
+        self.locked_palm_final_pose = (
             self.copy_locked_pose(
                 stats["newest_msg"],
                 xyz,
@@ -801,57 +744,27 @@ class TargetLockNode(Node):
             )
         )
 
-        if not self.palm_initial_locked:
-            self.locked_palm_initial_pose = (
-                locked_pose
-            )
+        self.palm_final_locked = True
+        self.palm_final_armed = False
 
-            self.palm_initial_locked = True
+        self.palm_final_pose_pub.publish(
+            self.locked_palm_final_pose
+        )
 
-            self.palm_initial_pose_pub.publish(
-                self.locked_palm_initial_pose
-            )
-
-            # Stop accumulating palm frames until final phase is armed.
-            self.palm_window.clear()
-
-            self.get_logger().info(
-                "PALM INITIAL LOCKED | "
-                f"XYZ=[{xyz[0]:+.4f}, "
-                f"{xyz[1]:+.4f}, "
-                f"{xyz[2]:+.4f}] m | "
-                f"pos_std_max="
-                f"{stats['max_position_std'] * 1000.0:.1f} mm | "
-                f"ori_rms="
-                f"{stats['angle_rms_deg']:.2f} deg"
-            )
-
-        elif self.palm_final_armed:
-            self.locked_palm_final_pose = (
-                locked_pose
-            )
-
-            self.palm_final_locked = True
-            self.palm_final_armed = False
-
-            self.palm_final_pose_pub.publish(
-                self.locked_palm_final_pose
-            )
-
-            self.palm_window.clear()
-
-            self.get_logger().info(
-                "PALM FINAL LOCKED | "
-                f"XYZ=[{xyz[0]:+.4f}, "
-                f"{xyz[1]:+.4f}, "
-                f"{xyz[2]:+.4f}] m | "
-                f"pos_std_max="
-                f"{stats['max_position_std'] * 1000.0:.1f} mm | "
-                f"ori_rms="
-                f"{stats['angle_rms_deg']:.2f} deg"
-            )
+        self.palm_window.clear()
 
         self.publish_states()
+
+        self.get_logger().info(
+            "PALM FINAL LOCKED | "
+            f"XYZ=[{xyz[0]:+.4f}, "
+            f"{xyz[1]:+.4f}, "
+            f"{xyz[2]:+.4f}] m | "
+            f"pos_std_max="
+            f"{stats['max_position_std'] * 1000.0:.1f} mm | "
+            f"ori_rms="
+            f"{stats['angle_rms_deg']:.2f} deg"
+        )
 
     # ==============================================================
     # Services
@@ -864,32 +777,24 @@ class TargetLockNode(Node):
     ):
         del request
 
-        if not self.palm_initial_locked:
-            response.success = False
-            response.message = (
-                "Palm Initial is not locked yet."
-            )
-            return response
-
-        # A second call is allowed; it simply reacquires final palm.
-        self.palm_final_locked = False
-        self.locked_palm_final_pose = None
-
+        # No Palm Initial prerequisite anymore.
         self.palm_window.clear()
+
+        self.palm_final_locked = False
         self.palm_final_armed = True
+        self.locked_palm_final_pose = None
 
         self.publish_states()
 
         response.success = True
         response.message = (
             "Palm Final armed. "
-            "Old palm samples cleared; "
-            "waiting for a fresh stable palm."
+            "Initial palm stage is disabled; "
+            "waiting for a NEW stable palm at WORK_HOME."
         )
 
         self.get_logger().info(
-            "PALM FINAL ARMED | "
-            "fresh palm window started."
+            "PALM FINAL ARMED | fresh palm window started."
         )
 
         return response
@@ -905,20 +810,20 @@ class TargetLockNode(Node):
         self.palm_window.clear()
 
         self.case_locked = False
-        self.palm_initial_locked = False
+
         self.palm_final_locked = False
         self.palm_final_armed = False
 
         self.locked_case_pose = None
-        self.locked_palm_initial_pose = None
         self.locked_palm_final_pose = None
 
         self.publish_states()
 
         response.success = True
         response.message = (
-            "All target locks cleared. "
-            "Waiting for new stable Case + Palm Initial."
+            "Target locks cleared. "
+            "Waiting for new stable CASE only; palm will be ignored "
+            "until /targets/arm_palm_final."
         )
 
         self.get_logger().info(

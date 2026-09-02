@@ -86,4 +86,19 @@ ros2 service call \
 std_srvs/srv/Trigger \
 "{}"
 ```
+### 干净的编译
+```sh
+cd ~/PiPER_X/piper_pick_handover_ws
+
+rm -rf build install log
+
+source /opt/ros/jazzy/setup.bash
+source ~/PiPER_X/agx_arm_ws/install/setup.bash
+
+colcon build \
+  --symlink-install \
+  --packages-select piper_pick_handover
+
+source install/setup.bash
+```
 

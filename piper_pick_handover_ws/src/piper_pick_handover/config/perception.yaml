@@ -6,7 +6,7 @@ scene_perception_node:
 
     # CPU perception inference rate.
     # Camera acquisition itself now runs continuously in a dedicated thread.
-    perception_rate_hz: 15.0
+    perception_rate_hz: 18.0
 
     # Stop-and-Look:
     # true = initial Case + Palm Initial observation starts automatically.

@@ -6,7 +6,7 @@ target_lock_node:
     # At 8 Hz perception, 20 samples ~= 2.5 s.
     # If CPU inference is faster/slower, this is sample-based rather than
     # strict time-based, which is intentional for STEP 4.
-    window_size: 20
+    window_size: 5
 
     # Earbud case should be very stable on the desk.
     case_position_std_threshold_m: 0.006

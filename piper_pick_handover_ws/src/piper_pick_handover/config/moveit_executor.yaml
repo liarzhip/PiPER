@@ -90,7 +90,7 @@ moveit_executor_node:
     # Empty-gripper diagnostic close target.
     # For the later REAL grasp, do not use "reached 0.0 m" as the success
     # condition because the earbud case will physically stop the jaws.
-    gripper_close_width_m: 0.000
+    gripper_close_width_m: 0.043
 
     # Real feedback acceptance.
     gripper_position_tolerance_m: 0.006

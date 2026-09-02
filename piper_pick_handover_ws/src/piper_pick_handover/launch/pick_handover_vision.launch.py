@@ -152,12 +152,13 @@ def generate_launch_description():
             LogInfo(
                 msg=(
                     "VISION ONLY: hand-eye TF + DaBai perception + target transform "
-                    "+ target lock + grasp target generation."
+                    "+ staged target lock + grasp target generation."
                 )
             ),
             LogInfo(
                 msg=(
-                    "This launch does NOT start PIPER/MoveIt and does NOT execute motion."
+                    "Two-stage perception: first CASE only; after Lift + WORK_HOME, "
+                    "manager arms a fresh Palm Final. No Palm Initial is used."
                 )
             ),
             handeye_tf,
