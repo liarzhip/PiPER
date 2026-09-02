@@ -1,0 +1,15 @@
+handover_planner_node:
+  ros__parameters:
+
+    base_frame: "base_link"
+
+    # Approximate held earbud-case center relative to gripper_base along +Z.
+    # This matches the existing grasp geometry starting point.
+    object_center_offset_from_gripper_m: 0.138
+
+    # The EARbud-case center, not gripper_base, stays this far from Palm Final.
+    # Conservative first-test values.
+    approach_object_standoff_m: 0.20
+    final_object_standoff_m: 0.10
+
+    minimum_palm_distance_m: 0.12

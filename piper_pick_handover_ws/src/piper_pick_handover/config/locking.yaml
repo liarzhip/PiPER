@@ -1,0 +1,25 @@
+target_lock_node:
+  ros__parameters:
+
+    base_frame: "base_link"
+
+    # At 8 Hz perception, 20 samples ~= 2.5 s.
+    # If CPU inference is faster/slower, this is sample-based rather than
+    # strict time-based, which is intentional for STEP 4.
+    window_size: 20
+
+    # Earbud case should be very stable on the desk.
+    case_position_std_threshold_m: 0.006
+    case_orientation_rms_threshold_deg: 5.0
+
+    # Human palm naturally has more jitter than a static object.
+    palm_position_std_threshold_m: 0.010
+    palm_orientation_rms_threshold_deg: 10.0
+
+    # Coarse sanity guards in base_link.
+    # They are NOT a replacement for MoveIt workspace/collision checks.
+    min_case_z_m: -0.10
+    max_case_z_m: 1.20
+
+    min_palm_z_m: -0.10
+    max_palm_z_m: 1.50

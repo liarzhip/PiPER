@@ -1,0 +1,11 @@
+target_transformer_node:
+  ros__parameters:
+    base_frame: "base_link"
+
+    case_child_frame: "earbud_case_live"
+    palm_child_frame: "palm_live"
+
+    # Stop-and-Look:
+    # target_transformer_node always uses the latest available TF.
+    # New targets must only be locked after the robot has stopped.
+    tf_timeout_sec: 0.5

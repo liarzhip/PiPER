@@ -53,6 +53,7 @@ ros2 service call \
   std_srvs/srv/Trigger \
   "{}"
 ```
+
 ### 3. locked_pose_transformer.py
 通过订阅/handshake/palm_pose_camera获得手掌的位置，然后通过TF完成
 $${}^{base}T_{palm} = {}^{base}T_{camera}\;{}^{camera}T_{palm}$$
@@ -97,12 +98,14 @@ DONE
 ## 终端执行命令
 ### 1. 环境配置
 ```sh
+
 cd ~/PiPER_X/piper_handshake_ws
 
 source /opt/ros/jazzy/setup.bash
 source ~/PiPER_X/agx_arm_ws/install/setup.bash
 source ~/PiPER_X/piper_hand_follow_ws/install/setup.bash
 ```
+
 ### 2.启动PIPER+Movit
 ```sh
 ros2 launch agx_arm_ctrl start_single_agx_arm_moveit.launch.py \

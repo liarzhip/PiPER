@@ -1,0 +1,33 @@
+grasp_planner_node:
+  ros__parameters:
+
+    base_frame: "base_link"
+    gripper_frame: "gripper_base"
+
+    # gripper_base +Y is the opening/closing direction.
+    # "short" means the jaws clamp across the short dimension of the case.
+    grip_across_axis: "short"
+
+    # Initial geometry estimate only.
+    # The Piper X URDF places the finger prismatic-joint origins around
+    # +0.138 m from gripper_base along its forward direction.
+    # Inspect the target in RViz and tune this to the REAL finger contact
+    # center before any execution.
+    gripper_base_to_grasp_center_m: 0.138
+
+    # Desired side-contact depth below the segmented top surface.
+    # Tune after checking the actual earbud-case height.
+    grasp_depth_below_surface_m: 0.020
+
+    # Safe geometric staging distances for RViz planning.
+    pregrasp_offset_m: 0.100
+    lift_height_m: 0.100
+
+    # Reject a detected "top surface" that points too sideways.
+    min_surface_up_dot: 0.50
+
+    # A rectangular parallel-jaw grasp has a 180-deg symmetry around
+    # gripper Z. Choose the option requiring less wrist rotation.
+    choose_nearest_wrist_solution: true
+
+    tf_timeout_sec: 0.15

@@ -1,0 +1,75 @@
+work_home_startup_node:
+  ros__parameters:
+
+    joint_names:
+      - "joint1"
+      - "joint2"
+      - "joint3"
+      - "joint4"
+      - "joint5"
+      - "joint6"
+
+    # User-defined WORK_HOME from real /feedback/joint_states.
+    work_home_positions:
+      - 0.5119050696099369
+      - 0.48549823802726266
+      - -0.7454475768192981
+      - 1.072312839132796
+      - 0.12866567245702198
+      - -0.11885692206081386
+
+    feedback_topic: "/feedback/joint_states"
+    control_topic: "/control/joint_states"
+    control_gate_service: "/control_enable"
+
+    feedback_wait_timeout_sec: 10.0
+    move_timeout_sec: 30.0
+    command_rate_hz: 10.0
+
+    # About 1.43 deg max per joint for startup acceptance.
+    joint_tolerance_rad: 0.025
+    stable_samples: 8
+
+    ready_sentinel: "/tmp/piper_pick_handover_work_home_ready"
+
+
+work_home_manager_node:
+  ros__parameters:
+
+    planning_group: "arm"
+
+    joint_names:
+      - "joint1"
+      - "joint2"
+      - "joint3"
+      - "joint4"
+      - "joint5"
+      - "joint6"
+
+    # EXACT SAME WORK_HOME for task-end return.
+    work_home_positions:
+      - 0.6047216792309954
+      - 0.5739340712258153
+      - -1.269657217655795
+      - 1.5629947050384818
+      - 0.030944687637859465
+      - -0.11095058054927953
+
+    move_group_action: "/move_action"
+    execute_action: "/execute_trajectory"
+
+    allowed_planning_time: 5.0
+    num_planning_attempts: 5
+
+    velocity_scaling: 0.08
+    acceleration_scaling: 0.05
+
+    joint_goal_tolerance_rad: 0.015
+    post_execute_tolerance_rad: 0.030
+
+    action_server_timeout_sec: 5.0
+    plan_result_timeout_sec: 20.0
+    execute_result_timeout_sec: 60.0
+
+    # Keep false until the return trajectory is checked in RViz.
+    allow_work_home_execute: false

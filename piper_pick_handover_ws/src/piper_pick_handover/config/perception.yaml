@@ -1,0 +1,47 @@
+scene_perception_node:
+  ros__parameters:
+
+    camera_frame: "camera_color_optical_frame"
+    show_window: false
+
+    # CPU perception inference rate.
+    # Camera acquisition itself now runs continuously in a dedicated thread.
+    perception_rate_hz: 15.0
+
+    # Stop-and-Look:
+    # true = initial Case + Palm Initial observation starts automatically.
+    # Later the task manager can pause/resume perception through services.
+    perception_enabled_on_startup: true
+
+    # pyorbbecsdk wait_for_frames timeout used by the camera reader thread.
+    camera_reader_timeout_ms: 1000
+
+    depth_roi_radius: 5
+    min_depth_mm: 80.0
+    max_depth_mm: 2500.0
+
+    enable_undistortion: true
+    distortion_coeffs:
+      - -0.07695747166872025
+      - -0.10455092042684555
+      - 0.0004042932123411447
+      - -0.0000033492169677629136
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+
+    enable_case_detector: true
+    yolo_model: "/home/liar/PiPER_X/piper_pick_handover_ws/src/piper_pick_handover/models/earbud_case_seg.pt"
+    yolo_device: "cpu"
+    yolo_imgsz: 512
+    yolo_conf: 0.55
+    earbud_case_class: "earbud_case"
+
+    case_mask_erode_px: 5
+    case_depth_band_mm: 35.0
+    case_max_3d_points: 2500
+    case_min_3d_points: 40
+
+    hand_detection_confidence: 0.60
+    hand_tracking_confidence: 0.60

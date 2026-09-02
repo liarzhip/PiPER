@@ -1,3 +1,4 @@
+# 这里是整个文件夹的项目总揽
 ## Python SDK:pyAgxArm控制
 ### 1. 激活CAN
 ```sh
@@ -41,7 +42,7 @@ ros2 launch agx_arm_ctrl start_single_agx_arm_moveit.launch.py \
   arm_type:=piper_x \
   fw_version:=v189 \
   effector_type:=agx_gripper\
-  auto_enable=true
+  auto_enable:=true
   tcp_offset:='[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]'
 ```
 

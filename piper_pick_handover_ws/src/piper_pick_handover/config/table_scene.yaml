@@ -1,0 +1,28 @@
+table_scene_node:
+  ros__parameters:
+
+    base_frame: "base_link"
+    table_object_id: "table_patch"
+
+    # ------------------------------------------------------------
+    # MEASURE THIS VALUE:
+    # Real vertical thickness of the earbud case when it lies flat
+    # on the tabletop.
+    #
+    # Example:
+    #   25 mm -> 0.025
+    # ------------------------------------------------------------
+    case_height_m: 0.026
+
+    # Horizontal local tabletop collision patch.
+    table_patch_size_x_m: 0.50
+    table_patch_size_y_m: 0.50
+
+    # Collision volume extends downward from the tabletop.
+    table_thickness_m: 0.05
+
+    # Raise collision top slightly above the estimated physical table.
+    table_safety_margin_m: 0.003
+
+    apply_planning_scene_service: "/apply_planning_scene"
+    service_timeout_sec: 5.0

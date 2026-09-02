@@ -1,0 +1,7 @@
+path: /home/liar/PiPER_X/piper_pick_handover_ws/datasets/earbud_case_seg
+
+train: images/train
+val: images/val
+
+names:
+  0: earbud_case

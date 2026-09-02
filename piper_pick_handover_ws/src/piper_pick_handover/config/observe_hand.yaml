@@ -1,0 +1,7 @@
+observe_hand_planner_node:
+  ros__parameters:
+
+    base_frame: "base_link"
+
+    # Reject implausibly close Palm Initial targets.
+    minimum_hand_distance_m: 0.08

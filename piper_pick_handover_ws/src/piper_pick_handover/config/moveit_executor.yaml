@@ -1,0 +1,147 @@
+moveit_executor_node:
+  ros__parameters:
+
+    base_frame: "base_link"
+
+    # Arm MoveIt group.
+    planning_group: "arm"
+    target_tool_frame: "gripper_base"
+    planning_link: "link6"
+
+    # Gripper MoveIt group.
+    gripper_planning_group: "gripper"
+    gripper_joint_name: "gripper"
+
+    move_group_action: "/move_action"
+    execute_action: "/execute_trajectory"
+    compute_cartesian_path_service: "/compute_cartesian_path"
+
+    allowed_planning_time: 5.0
+    num_planning_attempts: 5
+
+    # First real arm tests: deliberately slow.
+    velocity_scaling: 0.08
+    acceleration_scaling: 0.05
+
+    position_tolerance_m: 0.006
+    orientation_tolerance_rad: 0.08
+
+    planner_id: ""
+    pipeline_id: ""
+
+    action_server_timeout_sec: 5.0
+    plan_result_timeout_sec: 20.0
+    execute_result_timeout_sec: 60.0
+    tf_timeout_sec: 0.5
+
+    # Generic "execute whatever was planned last" remains blocked.
+    allow_execute: false
+
+    # STEP 7B.
+    allow_pregrasp_execute: true
+
+    # ------------------------------------------------------------
+    # STEP 7C execution gates
+    # ------------------------------------------------------------
+
+    # Whole sequence:
+    #   verify PreGrasp
+    #   -> MoveIt gripper open
+    #   -> Cartesian PreGrasp->Grasp
+    #   -> stop, gripper remains open
+    allow_grasp_preview_execute: true
+
+    # Independent gripper MoveIt execution gate.
+    # Keep false for the first /moveit/plan_gripper_open test.
+    allow_gripper_execute: true
+
+    # Official AgileX auto Gate watches the arm_controller action.
+    # Gripper-only MoveIt execution therefore uses this local automatic Gate:
+    #   /control_enable=true -> ExecuteTrajectory -> /control_enable=false
+    gripper_auto_gate: true
+    control_gate_service: "/control_enable"
+    control_gate_timeout_sec: 5.0
+
+    require_table_ready: true
+    require_grasp_plan_ready: true
+    require_start_targets_ready: true
+
+    stop_perception_before_motion: true
+    perception_stop_service: "/perception/stop_observation"
+
+    post_execute_position_tolerance_m: 0.030
+    post_execute_orientation_tolerance_rad: 0.18
+
+    pregrasp_required_position_tolerance_m: 0.030
+    pregrasp_required_orientation_tolerance_rad: 0.22
+
+    # Cartesian PreGrasp -> Grasp.
+    cartesian_max_step_m: 0.005
+    cartesian_jump_threshold: 0.0
+    cartesian_min_fraction: 0.99
+
+    # ------------------------------------------------------------
+    # Gripper target THROUGH MoveIt
+    # ------------------------------------------------------------
+
+    # Real external AgileX gripper joint is total jaw opening [0, 0.1] m.
+    gripper_open_width_m: 0.070
+
+    # Empty-gripper diagnostic close target.
+    # For the later REAL grasp, do not use "reached 0.0 m" as the success
+    # condition because the earbud case will physically stop the jaws.
+    gripper_close_width_m: 0.000
+
+    # Real feedback acceptance.
+    gripper_position_tolerance_m: 0.006
+
+    # MoveIt JointConstraint tolerance.
+    gripper_goal_tolerance_m: 0.002
+
+    gripper_velocity_scaling: 0.30
+    gripper_acceleration_scaling: 0.20
+
+
+    # ============================================================
+    # STEP 7D: real grasp / Lift / Observe Hand
+    # ============================================================
+
+    # Real object grasp differs from empty CLOSE:
+    # held width must stay non-zero and within this range.
+    allow_object_grasp_execute: true
+    object_grasp_min_width_m: 0.008
+    object_grasp_max_width_m: 0.065
+    object_grasp_min_closure_m: 0.005
+    object_grasp_settle_sec: 0.35
+
+    allow_lift_execute: true
+    require_object_grasped_for_lift: true
+    lift_required_position_tolerance_m: 0.030
+    lift_required_orientation_tolerance_rad: 0.22
+
+    allow_observe_hand_execute: true
+    require_lift_before_observe: true
+    observe_required_position_tolerance_m: 0.035
+    observe_required_orientation_tolerance_rad: 0.25
+    observe_settle_sec: 0.50
+
+    perception_start_service: "/perception/start_observation"
+    arm_palm_final_service: "/targets/arm_palm_final"
+
+
+    # ============================================================
+    # STEP 7E: fresh Palm Final -> handover
+    # ============================================================
+
+    # First move to a conservative approach point.
+    allow_handover_approach_execute: true
+
+    # Final straight Cartesian segment toward the hand.
+    # Keep false until the RViz plan and real standoff are validated.
+    allow_handover_final_execute: true
+
+    handover_approach_required_position_tolerance_m: 0.035
+    handover_approach_required_orientation_tolerance_rad: 0.25
+
+    handover_final_required_position_tolerance_m: 0.030
+    handover_final_required_orientation_tolerance_rad: 0.22
